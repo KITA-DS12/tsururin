@@ -5,6 +5,7 @@
   'use strict';
   const E = TSR.Engine, S = TSR.Solver, C = TSR.Codec, D = TSR.Daily, UI = TSR.UI;
   const T = E.T;
+  const GA = (TSR.Analytics && TSR.Analytics.track) ? TSR.Analytics.track : function () {};
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
 
@@ -81,6 +82,10 @@
     $('#view-game').classList.remove('won');
     updateMeta();
     updateHUD();
+    GA('game_start', {
+      mode: ctx.mode,
+      stage_no: ctx.stageN || undefined,
+    });
   }
 
   function updateMeta() {
@@ -244,6 +249,14 @@
     UI.Sound.play('win');
 
     const streak = calcStreak(key);
+    if (!already) {
+      GA('daily_complete', {
+        moves: rec.moves,
+        par: c.par,
+        perfect: rec.moves <= c.par,
+        streak,
+      });
+    }
     const text = dailyShareText(c.info, rec, streak);
     const note = already ? '<div class="result-sub">きょうの記録はクリア済み。これは参考記録です</div>' : '';
     $('#resultCard').innerHTML = `
@@ -292,6 +305,11 @@
       line = `クリア! でも${who}はあと ${mv - am} 手みじかい。リベンジする?`; UI.Sound.play('win');
     }
     showStamp(stamp, mv + '手 / 作者 ' + am + '手', cls);
+    GA('challenge_clear', {
+      verdict: mv < am ? 'over' : mv === am ? 'tie' : 'under',
+      moves: mv,
+      author_moves: am,
+    });
     const text = challengeShareText(c, mv);
     $('#resultCard').innerHTML = `
       <div class="result-title">${esc(verdict)}</div>
@@ -409,6 +427,14 @@
     UI.Sound.play('win');
     const last = n >= D.STAGE_MAX;
     const cpCleared = !last && n % D.CHECKPOINT === 0 && !prev;
+    GA('stage_clear', {
+      stage_no: n,
+      moves: game.moves,
+      par: c.par,
+      perfect,
+      best_update: !prev || game.moves < (prev.moves || Infinity),
+    });
+    if (cpCleared) GA('stage_unlock', { cp_no: n });
     $('#resultCard').innerHTML = `
       <div class="result-title">${last ? '全ステージ制覇!' : perfect ? '最短手数でクリア' : 'クリア'}</div>
       ${cpCleared ? `<div class="result-sub">関門突破。ステージ${n + 1}〜${Math.min(D.STAGE_MAX, n + D.CHECKPOINT)}が解放されました</div>` : ''}
@@ -852,6 +878,18 @@
   $('#btnPubCopy').addEventListener('click', () => {
     const { text } = updatePublishUrl();
     copyText(text);
+    GA('challenge_create', {
+      moves: editor.authorMoves,
+      has_name: !!$('#authorName').value.trim(),
+    });
+    GA('challenge_share', { via: 'clipboard', moves: editor.authorMoves });
+  });
+  $('#btnPubX').addEventListener('click', () => {
+    GA('challenge_create', {
+      moves: editor.authorMoves,
+      has_name: !!$('#authorName').value.trim(),
+    });
+    GA('challenge_share', { via: 'x', moves: editor.authorMoves });
   });
   $('#btnPubRetest').addEventListener('click', () => {
     const level = E.parseLevel(editor.w, editor.h, editor.tiles);
