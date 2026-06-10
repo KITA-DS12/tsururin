@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ツルリン | 氷上スライドパズル挑戦状</title>
+<meta name="description" content="毎日1問の氷上スライドパズル。スワイプで滑って、ゴールにぴったり止まれ。挑戦状URLで友だちに勝負を仕掛けよう。ログイン不要・無料。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ツルリン | 氷上スライドパズル挑戦状">
+<meta property="og:description" content="壁にぶつかるまで止まれない。毎日1問+自作の挑戦状URLで「作者超え」を狙え。ログイン不要。">
+<!-- ▼ og:image はデプロイ後、実際の公開URLに書き換えてください(絶対URL必須) -->
+<meta property="og:image" content="https://your-domain.example/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://your-domain.example/ogp.png">
+<meta name="theme-color" content="#182A46">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23E8F1F8'/%3E%3Cpath d='M50 14 C70 14 78 32 78 54 C78 75 65 86 50 86 C35 86 22 75 22 54 C22 32 30 14 50 14 Z' fill='%231B2A44'/%3E%3Cpath d='M50 32 C62 32 68 44 68 60 C68 74 60 82 50 82 C40 82 32 74 32 60 C32 44 38 32 50 32 Z' fill='%23F7FBFF'/%3E%3Ccircle cx='41' cy='35' r='5' fill='%23fff'/%3E%3Ccircle cx='59' cy='35' r='5' fill='%23fff'/%3E%3Ccircle cx='42.5' cy='36' r='2.4' fill='%2310182B'/%3E%3Ccircle cx='57.5' cy='36' r='2.4' fill='%2310182B'/%3E%3Cpath d='M44 43 L56 43 L50 52 Z' fill='%23FF8A3D'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=DotGothic16&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="bg-deco" aria-hidden="true"></div>
+
+<div class="wrap">
+  <header class="site-head">
+    <a class="brand" href="#daily" aria-label="ツルリン ホーム">
+      <svg class="brand-mark" viewBox="0 0 100 100" aria-hidden="true">
+        <path d="M8 84 Q30 76 52 84 T96 84" stroke="#74C7E8" stroke-width="5" fill="none" stroke-linecap="round" opacity=".8"/>
+        <path d="M50 12 C70 12 78 30 78 52 C78 73 65 84 50 84 C35 84 22 73 22 52 C22 30 30 12 50 12 Z" fill="#1B2A44" transform="rotate(8 50 50)"/>
+        <path d="M50 30 C62 30 68 42 68 58 C68 72 60 80 50 80 C40 80 32 72 32 58 C32 42 38 30 50 30 Z" fill="#F7FBFF" transform="rotate(8 50 50)"/>
+        <circle cx="45" cy="32" r="5" fill="#fff"/><circle cx="62" cy="35" r="5" fill="#fff"/>
+        <circle cx="46.5" cy="33" r="2.4" fill="#10182B"/><circle cx="60.5" cy="36" r="2.4" fill="#10182B"/>
+        <path d="M49 41 L60 43 L53 50 Z" fill="#FF8A3D"/>
+        <path d="M4 64 L16 60 M2 74 L18 70" stroke="#9FBDD4" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <span class="brand-text">
+        <span class="eyebrow">氷上スライドパズル挑戦状</span>
+        <h1>ツルリン</h1>
+      </span>
+    </a>
+    <div class="head-tools">
+      <button id="btnSound" class="icon-btn" type="button" aria-label="効果音" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="メニュー">
+    <button class="tab" data-nav="daily" type="button">きょうの問題</button>
+    <button class="tab" data-nav="stages" type="button">ステージ</button>
+    <button class="tab" data-nav="make" type="button">つくる</button>
+    <button class="tab" data-nav="how" type="button">あそびかた</button>
+  </nav>
+
+  <main id="main">
+
+    <!-- ゲーム(デイリー/挑戦状/れんしゅう/テストプレイ共用) -->
+    <section id="view-game" hidden>
+      <div class="game-meta" id="gameMeta"></div>
+      <div class="board-wrap">
+        <div class="board-frame">
+          <div class="board" id="board" aria-label="ゲーム盤面。矢印キーまたはスワイプで操作"></div>
+        </div>
+        <div id="stampLayer" aria-live="polite"></div>
+      </div>
+      <div class="hud" id="hud"></div>
+
+      <div class="controls">
+        <div class="dpad" aria-label="十字キー">
+          <button class="d-u" data-dir="0" type="button" aria-label="上へ滑る">▲</button>
+          <button class="d-l" data-dir="3" type="button" aria-label="左へ滑る">◀</button>
+          <div class="d-c">スワイプ<br>でもOK</div>
+          <button class="d-r" data-dir="1" type="button" aria-label="右へ滑る">▶</button>
+          <button class="d-d" data-dir="2" type="button" aria-label="下へ滑る">▼</button>
+        </div>
+        <div class="side-actions">
+          <button id="btnUndo" class="btn small" type="button">↩ 1手もどす</button>
+          <button id="btnReset" class="btn small" type="button">↺ はじめから</button>
+        </div>
+      </div>
+
+      <div id="resultCard" class="card" hidden></div>
+    </section>
+
+    <!-- ステージ一覧 -->
+    <section id="view-stages" hidden>
+      <div class="stage-head">
+        <h2>ステージ</h2>
+        <p id="stageSummary"></p>
+        <p id="stageHint" class="stage-hint"></p>
+      </div>
+      <div class="stage-grid" id="stageGrid" aria-label="ステージ一覧"></div>
+    </section>
+
+    <!-- エディタ -->
+    <section id="view-editor" hidden>
+      <div class="editor-top">
+        <div class="size-pick">
+          盤面
+          <select id="edW" aria-label="横のマス数">
+            <option>4</option><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option>
+          </select>
+          ×
+          <select id="edH" aria-label="縦のマス数">
+            <option>4</option><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option>
+          </select>
+        </div>
+        <button id="btnEdClear" class="btn small" type="button">ぜんぶ消す</button>
+      </div>
+
+      <div class="editor-random">
+        <span class="er-label">自分で作るのがむずかしければ —</span>
+        <select id="edDiff" aria-label="ランダム生成の難易度">
+          <option value="easy">やさしい</option>
+          <option value="normal" selected>ふつう</option>
+          <option value="hard">むずかしい</option>
+        </select>
+        <button id="btnEdRandom" class="btn small dark" type="button">ランダム生成</button>
+      </div>
+
+      <div class="palette" id="palette" aria-label="タイルパレット"></div>
+
+      <div class="editor-board-wrap">
+        <div class="board-frame">
+          <div class="board" id="editorBoard" aria-label="エディタ盤面。タップで選択中のタイルを置く"></div>
+        </div>
+      </div>
+
+      <div class="ed-actions">
+        <button id="btnEdCheck" class="btn" type="button">とけるかチェック</button>
+        <button id="btnEdTest" class="btn primary" type="button" disabled>テストプレイ</button>
+      </div>
+      <div class="ed-status" id="edStatus">タイルを置いて問題をつくろう。公開には自分でのクリアが必要です</div>
+
+      <div id="publishPanel" class="card publish-panel" hidden>
+        <h3>挑戦状を発行</h3>
+        <div class="rec" id="pubRec"></div>
+        <div class="name-row">
+          <label for="authorName">作者名</label>
+          <input id="authorName" maxlength="12" placeholder="ニックネーム(12文字まで)">
+        </div>
+        <div class="url-box" id="pubUrl"></div>
+        <div class="share-row">
+          <a id="btnPubX" class="btn primary" target="_blank" rel="noopener" href="#">Xで挑戦状を投げる</a>
+          <button id="btnPubCopy" class="btn" type="button">本文をコピー</button>
+          <button id="btnPubRetest" class="btn small" type="button">記録を縮める(再テスト)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- あそびかた -->
+    <section id="view-how" class="how" hidden>
+      <div class="core-rule">
+        スワイプした方向に、<em>何かにぶつかるまで止まれずに滑る</em>。<br>
+        ゴールは通過しても無効 — <strong>ぴったり止まれ</strong>。
+      </div>
+
+      <h2>きほん</h2>
+      <p>盤面は氷。一度滑り出すと、壁・岩・氷塊に当たるまで止まれません。最短手数(PAR)を目指してゴールの真上で停止しましょう。手数は無制限、「1手もどす」は直前の1手だけ使えます。</p>
+
+      <h2>タイルずかん</h2>
+      <div class="legend" id="legend"></div>
+
+      <h2>ステージであそぶ</h2>
+      <p>全50ステージ。最初は岩だけのちいさな盤面から始まり、穴・砂・矢印床・クリスタル・氷塊が章ごとに登場します。新しいタイルはそのステージで説明が出るので、順番に進めるだけでぜんぶのルールが身につきます。5の倍数は「関門」ステージで、クリアすると次の5ステージがまとめて解放。途中を飛ばしてどんどん先へ進めます。</p>
+
+      <h2>毎日あそぶ</h2>
+      <p>「きょうの問題」は毎日0時(日本時間)に全員共通の1問が出ます。月曜はやさしく、日曜に向けてどんどん意地悪に。クリアしたら手数をシェアして、連続クリア日数を伸ばしましょう。</p>
+
+      <h2>挑戦状で勝負する</h2>
+      <p>エディタで問題を作り、<b>自分でクリアできた問題だけ</b>がURLとして発行されます。作問がむずかしければ「ランダム生成」で一発生成して、そのまま挑戦状にもできます。受け取った人があなたの手数より少なくクリアすると「作者超え」— 出題は同時に、あなたの腕前の証明でもあります。</p>
+
+      <div class="share-row" style="margin-top:18px">
+        <a class="btn primary" href="#stage=1">ステージ1からはじめる</a>
+        <a class="btn" href="#practice">れんしゅう(30秒)</a>
+        <a class="btn dark" href="#daily">きょうの問題へ</a>
+      </div>
+    </section>
+
+    <!-- 壊れた挑戦状 -->
+    <section id="view-error" hidden>
+      <div class="card error-card">
+        <div class="face"><svg viewBox="0 0 100 100" width="64" height="64" aria-hidden="true"><ellipse cx="50" cy="86" rx="30" ry="6" fill="rgba(24,42,70,.12)"/><path d="M22 30 L46 22 L52 40 L34 50 Z" fill="#A8D4EE"/><path d="M46 22 L74 32 L66 52 L52 40 Z" fill="#C2E2F4"/><path d="M34 50 L52 40 L50 70 L30 64 Z" fill="#8FC4E4"/><path d="M52 40 L66 52 L62 74 L50 70 Z" fill="#A8D4EE"/><path d="M22 30 L46 22 M46 22 L52 40 M52 40 L34 50 M52 40 L66 52 M50 70 L52 40" stroke="#F7FBFF" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".8"/></svg></div>
+        <h2>この挑戦状は破損しています</h2>
+        <p>URLが途中で切れているか、書き換えられているようです。<br>送り主にもう一度リンクをもらってください。</p>
+        <div class="share-row" style="margin-top:16px">
+          <a class="btn primary" href="#daily">きょうの問題であそぶ</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-foot">
+    <div class="lock">ログイン不要 — データはあなたの端末とURLの中にだけ保存されます</div>
+    <div>ツルリン — 氷上スライドパズル挑戦状</div>
+  </footer>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script src="js/engine.js"></script>
+<script src="js/solver.js"></script>
+<script src="js/codec.js"></script>
+<script src="js/daily.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

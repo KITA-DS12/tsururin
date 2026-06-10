@@ -1,0 +1,19 @@
+{
+  "name": "tsururin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "氷上スライドパズル挑戦状 — 完全静的Webゲーム",
+  "scripts": {
+    "test": "node tools/test.js",
+    "smoke": "node tools/smoke.js",
+    "ogp": "node tools/ogp.js",
+    "promo": "node tools/promo.js"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.0",
+    "sharp": "^0.33.0"
+  },
+  "dependencies": {
+    "sharp": "^0.34.5"
+  }
+}
