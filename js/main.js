@@ -634,19 +634,20 @@
   /* ============================================================
      エディタ
      ============================================================ */
+  // 6列表示で 1行目=基本タイル / 2行目=動くタイル+矢印4種 が横並びになる順
   const PAL = [
+    { t: T.START, name: 'スタート' },
+    { t: T.GOAL, name: 'ゴール' },
     { t: T.WALL, name: '岩' },
     { t: T.HOLE, name: '穴' },
     { t: T.SAND, name: '砂' },
+    { t: T.CRYSTAL, name: 'クリスタル' },
+    { t: T.BLOCK, name: '氷塊' },
+    { t: T.CRACK, name: 'ヒビ氷' },
     { t: T.AU, name: '矢印↑' },
     { t: T.AR, name: '矢印→' },
     { t: T.AD, name: '矢印↓' },
     { t: T.AL, name: '矢印←' },
-    { t: T.CRYSTAL, name: 'クリスタル' },
-    { t: T.BLOCK, name: '氷塊' },
-    { t: T.CRACK, name: 'ヒビ氷' },
-    { t: T.START, name: 'スタート' },
-    { t: T.GOAL, name: 'ゴール' },
   ];
 
   let editor = loadDraft() || newEditor(7, 7);
