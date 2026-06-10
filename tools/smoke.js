@@ -115,8 +115,14 @@ function boot(hash, setup) {
     const w = boot('#make');
     const doc = w.document;
     ok(!doc.querySelector('#view-editor').hidden, 'エディタ表示');
-    ok(doc.querySelectorAll('#palette .pal-btn').length === 13, 'パレット13種');
+    ok(doc.querySelectorAll('#palette .pal-btn').length === 12, 'パレット12種(けすはツールバーへ)');
     ok(doc.querySelectorAll('#editorBoard .cell').length === 49, '7x7セル');
+    // けすボタン: クリックで選択状態になり、パレットを選ぶと解除される
+    const erase = doc.querySelector('#btnEdErase');
+    erase.click();
+    ok(erase.classList.contains('active') && erase.getAttribute('aria-pressed') === 'true', 'けすツール選択でactive');
+    doc.querySelector('#palette .pal-btn').click();
+    ok(!erase.classList.contains('active') && erase.getAttribute('aria-pressed') === 'false', 'パレット選択でけす解除');
     // 空盤面でチェック → スタート/ゴール必須メッセージ
     doc.querySelector('#btnEdCheck').click();
     await wait(80);

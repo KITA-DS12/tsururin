@@ -647,7 +647,6 @@
     { t: T.CRACK, name: 'ヒビ氷' },
     { t: T.START, name: 'スタート' },
     { t: T.GOAL, name: 'ゴール' },
-    { t: -1, name: 'けす' },
   ];
 
   let editor = loadDraft() || newEditor(7, 7);
@@ -685,10 +684,14 @@
       const b = document.createElement('button');
       b.className = 'pal-btn' + (editor.tool === p.t ? ' active' : '');
       b.type = 'button';
-      b.innerHTML = (p.t === -1 ? '<span class="erase-mark">✕</span>' : UI.tileSVG(p.t)) + `<span>${p.name}</span>`;
+      b.innerHTML = UI.tileSVG(p.t) + `<span>${p.name}</span>`;
       b.addEventListener('click', () => { editor.tool = p.t; renderPalette(); });
       pal.appendChild(b);
     }
+    // ツールバー側の「けす」ボタンも選択状態を同期
+    const er = $('#btnEdErase');
+    er.classList.toggle('active', editor.tool === -1);
+    er.setAttribute('aria-pressed', editor.tool === -1 ? 'true' : 'false');
   }
 
   function renderEditorBoard() {
@@ -789,6 +792,11 @@
       renderEditorStatus();
       setEdStatus('できあがり(解けることは確認済み)。このままテストプレイへ。手直ししてもOK', 'ok');
     }, 30);
+  });
+
+  $('#btnEdErase').addEventListener('click', () => {
+    editor.tool = -1;
+    renderPalette();
   });
 
   $('#btnEdClear').addEventListener('click', () => {

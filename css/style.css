@@ -373,6 +373,14 @@ body {
   gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
 }
 .size-pick { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; }
+.ed-actions { display: flex; align-items: center; gap: 8px; }
+.btn.erase-tool { display: inline-flex; align-items: center; gap: 5px; }
+.btn.erase-tool .erase-mark { font-size: 15px; line-height: 1; color: var(--ink-soft); }
+.btn.erase-tool.active {
+  border-color: var(--beak);
+  box-shadow: 0 0 0 2.5px rgba(255,138,61,.35);
+}
+.btn.erase-tool.active .erase-mark { color: var(--beak); }
 .size-pick select {
   font-family: var(--font-dot); font-size: 15px;
   border: 2px solid rgba(27,42,68,.16); border-radius: 10px;
