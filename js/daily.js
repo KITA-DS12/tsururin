@@ -13,13 +13,13 @@
 
   // 曜日別レシピ(0=日 … 6=土)。日曜が最難関。
   const CFG = [
-    /*日*/ { w: 9, h: 9, walls: [9, 13], holes: [2, 3], sand: [1, 2], arrows: [1, 3], crystals: [1, 2], blocks: [1, 2], par: [6, 12] },
-    /*月*/ { w: 5, h: 5, walls: [3, 4],  holes: [0, 0], sand: [0, 0], arrows: [0, 0], crystals: [0, 0], blocks: [0, 0], par: [3, 5] },
-    /*火*/ { w: 6, h: 6, walls: [4, 6],  holes: [1, 2], sand: [0, 0], arrows: [0, 0], crystals: [0, 0], blocks: [0, 0], par: [4, 6] },
-    /*水*/ { w: 6, h: 6, walls: [4, 6],  holes: [0, 2], sand: [1, 2], arrows: [0, 0], crystals: [0, 0], blocks: [0, 0], par: [4, 7] },
-    /*木*/ { w: 7, h: 7, walls: [6, 8],  holes: [1, 2], sand: [0, 2], arrows: [1, 2], crystals: [0, 0], blocks: [0, 0], par: [5, 8] },
-    /*金*/ { w: 7, h: 7, walls: [6, 8],  holes: [1, 2], sand: [0, 1], arrows: [0, 2], crystals: [1, 2], blocks: [0, 0], par: [5, 9] },
-    /*土*/ { w: 8, h: 8, walls: [8, 10], holes: [1, 3], sand: [0, 2], arrows: [0, 2], crystals: [0, 2], blocks: [1, 1], par: [6, 10] },
+    /*日*/ { w: 9, h: 9, walls: [11, 15], holes: [2, 4], sand: [1, 3], arrows: [1, 3], crystals: [1, 3], blocks: [1, 2], par: [8, 14] },
+    /*月*/ { w: 6, h: 6, walls: [4, 5],   holes: [0, 1], sand: [0, 1], arrows: [0, 0], crystals: [0, 0], blocks: [0, 0], par: [4, 7] },
+    /*火*/ { w: 6, h: 6, walls: [5, 7],   holes: [1, 2], sand: [0, 1], arrows: [0, 0], crystals: [0, 0], blocks: [0, 0], par: [5, 8] },
+    /*水*/ { w: 7, h: 7, walls: [5, 7],   holes: [1, 2], sand: [1, 2], arrows: [0, 1], crystals: [0, 0], blocks: [0, 0], par: [5, 8] },
+    /*木*/ { w: 7, h: 7, walls: [7, 9],   holes: [1, 2], sand: [1, 2], arrows: [1, 2], crystals: [0, 1], blocks: [0, 0], par: [6, 10] },
+    /*金*/ { w: 8, h: 8, walls: [7, 9],   holes: [1, 2], sand: [0, 2], arrows: [1, 2], crystals: [1, 2], blocks: [0, 1], par: [6, 10] },
+    /*土*/ { w: 8, h: 8, walls: [9, 12],  holes: [2, 3], sand: [1, 2], arrows: [1, 2], crystals: [1, 2], blocks: [1, 2], par: [7, 12] },
   ];
 
   function strHash(s) {
