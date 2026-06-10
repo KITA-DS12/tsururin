@@ -23,15 +23,19 @@ python3 -m http.server 8000
 
 `index.html` をダブルクリックして file:// で開いても動作します(Webフォントのみネット接続時に適用)。
 
-### デプロイ(月額0円構成)
+### デプロイ
 
-| ホスティング | 手順 |
-|---|---|
-| **Cloudflare Pages** | ダッシュボード → Pages → 「アップロード」でこのフォルダをそのままアップロード |
-| **GitHub Pages** | リポジトリにpush → Settings → Pages → ブランチを選択 |
-| **Netlify** | ドロップゾーンにこのフォルダをドラッグ&ドロップ |
+本番環境は **S3 + CloudFront + Route 53** で `https://tsururin.mu-k.net` に配信。
 
-ビルド工程はありません。`index.html` / `css/` / `js/` の3点が本体です。
+```bash
+make deploy   # S3 同期 + CloudFront キャッシュ無効化
+```
+
+事前に `.env` を作成し、AWS CLI でログイン済みであること。初回のインフラ構築手順は [`docs/DEPLOY.md`](docs/DEPLOY.md) を参照。
+
+#### 他のホスティングを使う場合
+
+ビルド工程はないため、`index.html` / `css/` / `js/` / `ogp.png` / `promo.png` を任意のホスティングに置けば動作する（Cloudflare Pages・GitHub Pages・Netlify など）。
 
 ## ファイル構成
 
