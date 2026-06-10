@@ -18,3 +18,6 @@ npm-debug.log*
 # Env
 .env
 .env.local
+
+# AWS / Deploy 一時ファイル
+.aws-tmp/
