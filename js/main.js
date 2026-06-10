@@ -22,6 +22,7 @@
     visited: 'tsururin.visited.v1',
     stages: 'tsururin.stages.v1',
   };
+  const HASHTAGS = '#ツルリンチャレンジ';
 
   /* ---------------- 共通UI ---------------- */
   let toastTimer = null;
@@ -286,6 +287,7 @@
     ];
     if (streak > 1) lines.push(`${streak}日連続クリア中`);
     lines.push(baseUrl());
+    lines.push(HASHTAGS);
     return lines.join('\n');
   }
 
@@ -332,9 +334,9 @@
   function challengeShareText(c, mv) {
     const who = c.authorName ? `「${c.authorName}」さん` : 'なぞの作者';
     const url = c.url;
-    if (mv < c.authorMoves) return `${who}の挑戦状で「作者超え」達成\n${mv}手(作者 ${c.authorMoves}手)\nあなたも挑戦 → ${url}`;
-    if (mv === c.authorMoves) return `${who}の挑戦状と引き分け\n${mv}手(作者と同記録)\nあなたは超えられる? → ${url}`;
-    return `${who}の挑戦状を ${mv}手でクリア(作者は ${c.authorMoves}手)\nだれか作者を倒して → ${url}`;
+    if (mv < c.authorMoves) return `${who}の挑戦状で「作者超え」達成\n${mv}手(作者 ${c.authorMoves}手)\nあなたも挑戦 → ${url}\n${HASHTAGS}`;
+    if (mv === c.authorMoves) return `${who}の挑戦状と引き分け\n${mv}手(作者と同記録)\nあなたは超えられる? → ${url}\n${HASHTAGS}`;
+    return `${who}の挑戦状を ${mv}手でクリア(作者は ${c.authorMoves}手)\nだれか作者を倒して → ${url}\n${HASHTAGS}`;
   }
 
   /* ---------------- ステージモード ---------------- */
@@ -868,7 +870,7 @@
     });
     const url = baseUrl() + '#c=' + payload;
     $('#pubUrl').textContent = url;
-    const text = `ツルリンで挑戦状をつくりました。\n作者記録 ${editor.authorMoves}手 — 超えられるなら超えてみて\n${url}`;
+    const text = `ツルリンで挑戦状をつくりました。\n作者記録 ${editor.authorMoves}手 — 超えられるなら超えてみて\n${url}\n${HASHTAGS}`;
     $('#btnPubX').href = 'https://x.com/intent/post?text=' + encodeURIComponent(text);
     return { url, text };
   }
