@@ -119,6 +119,33 @@ console.log('--- engine: 氷塊 ---');
   ok(!r.moved || (r.push === null && !r.moved), '塊がゴール直前で動けない場合は空振り');
 }
 
+console.log('--- engine: ヒビ氷 ---');
+{
+  // 通過で割れる: P K . # → 右で x2 停止、K は割れ済み
+  const lv = level1D([T.START, T.CRACK, T.ICE, T.WALL]);
+  const r = E.simulate(lv, E.initState(lv), 1);
+  ok(r.outcome === 'stop' && r.state.pos === 2 && r.state.cracked === 1, 'ヒビ氷を通過すると割れる');
+  // 割れた上に戻ろうとすると落ちる
+  const r2 = E.simulate(lv, r.state, 3);
+  ok(r2.outcome === 'fall' && r2.state.pos === 1, '割れたヒビ氷に入ると落下');
+}
+{
+  // 上で停止はできる(まだ割れない)。離脱した瞬間に割れる
+  const lv = level1D([T.START, T.ICE, T.CRACK, T.WALL]);
+  const r = E.simulate(lv, E.initState(lv), 1);
+  ok(r.outcome === 'stop' && r.state.pos === 2 && r.state.cracked === 0, 'ヒビ氷の上で停止可能(未破壊)');
+  const r2 = E.simulate(lv, r.state, 3);
+  ok(r2.outcome === 'stop' && r2.state.pos === 0 && r2.state.cracked === 1, '離脱した瞬間に割れる');
+  const r3 = E.simulate(lv, r2.state, 1);
+  ok(r3.outcome === 'fall' && r3.state.pos === 2, '割れた跡には二度と乗れない');
+}
+{
+  // 矢印で同一 move 内に同じヒビ氷へ戻ると自滅
+  const lv = level1D([T.START, T.CRACK, T.AL]);
+  const r = E.simulate(lv, E.initState(lv), 1);
+  ok(r.outcome === 'fall' && r.state.pos === 1, '矢印で割れ跡に押し戻されて落下');
+}
+
 console.log('--- solver ---');
 {
   const p = D.PRACTICE;
@@ -134,6 +161,16 @@ console.log('--- solver ---');
   const lv2 = level1D([T.START, T.GOAL, T.WALL]);
   const r2 = S.solve(lv2);
   ok(r2 && r2.par === 1 && r2.capped === false, '解ありは{par,capped:false}');
+}
+{
+  // ヒビ氷の状態をソルバーが区別する:
+  // # G . P K C # … クリスタル回収に右進→ヒビ氷が割れて帰り道が消える→解なし
+  const crack = [T.WALL, T.GOAL, T.ICE, T.START, T.CRACK, T.CRYSTAL, T.WALL];
+  ok(S.solve(level1D(crack)) === null, 'ヒビ氷で帰り道が消えると解なし');
+  // 同じ盤面のヒビ氷を普通の氷にすると PAR=2 で解ける
+  const ice = crack.slice(); ice[4] = T.ICE;
+  const r = S.solve(level1D(ice));
+  ok(r && r.par === 2, 'ヒビ氷を氷に置換すれば解ける(PAR=2)');
 }
 console.log('--- solver: diagnose ---');
 {
@@ -168,6 +205,13 @@ console.log('--- codec ---');
   ok(C.decodeChallenge(broken).error != null, 'CRCで破損検出');
   ok(C.decodeChallenge('').error != null, '空文字でエラー');
   ok(C.decodeChallenge('!!!!####').error != null, '不正文字でエラー');
+
+  // ヒビ氷(タイル12)を含む盤面の roundtrip
+  const ct = p.tiles.slice();
+  ct[1] = T.CRACK;
+  const enc2 = C.encodeChallenge({ w: p.w, h: p.h, tiles: ct, authorMoves: 3, name: '' });
+  const dec2 = C.decodeChallenge(enc2);
+  ok(!dec2.error && JSON.stringify(dec2.tiles) === JSON.stringify(ct), 'ヒビ氷入り盤面のroundtrip');
 }
 {
   // ランダム盤面 ×80 ラウンドトリップ
@@ -249,9 +293,10 @@ console.log('--- stages: 全50ステージ生成+関門+ランダム生成 ---')
   }
   // 新タイル導入ステージは、最短解で実際にそのタイルが機能している(飾りで終わらない)
   const ENGAGED_CHECKS = [
-    { n: 9,  name: '穴',   fn: (lv, dirs, par) => D.holeEngaged(lv, dirs, par) },
-    { n: 17, name: '砂',   fn: (lv, dirs) => D.sandEngaged(lv, dirs) },
-    { n: 41, name: '氷塊', fn: (lv, dirs) => D.blockEngaged(lv, dirs) },
+    { n: 9,  name: '穴',     fn: (lv, dirs, par) => D.holeEngaged(lv, dirs, par) },
+    { n: 17, name: '砂',     fn: (lv, dirs) => D.sandEngaged(lv, dirs) },
+    { n: 41, name: '氷塊',   fn: (lv, dirs) => D.blockEngaged(lv, dirs) },
+    { n: 46, name: 'ヒビ氷', fn: (lv, dirs, par) => D.crackEngaged(lv, dirs, par) },
   ];
   for (const c of ENGAGED_CHECKS) {
     const g2 = D.generateStage(c.n);

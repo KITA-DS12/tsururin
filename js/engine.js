@@ -10,6 +10,7 @@
     ICE: 0, WALL: 1, HOLE: 2, SAND: 3,
     AU: 4, AR: 5, AD: 6, AL: 7,        // 矢印床(上右下左)
     CRYSTAL: 8, BLOCK: 9, START: 10, GOAL: 11,
+    CRACK: 12,                          // ヒビ氷: 一度離れると割れて穴になる
   };
 
   // 方向: 0=上 1=右 2=下 3=左
@@ -21,7 +22,7 @@
   /** タイル配列からレベル定義を作る。動的要素(クリスタル/氷塊/開始位置)は分離する。 */
   function parseLevel(w, h, tiles) {
     const grid = new Uint8Array(w * h);
-    const crystals = [], blocks = [], holes = [];
+    const crystals = [], blocks = [], holes = [], cracks = [];
     let start = -1, goal = -1;
     for (let i = 0; i < w * h; i++) {
       const t = tiles[i] | 0;
@@ -31,18 +32,25 @@
         case T.START:   start = i;        grid[i] = T.ICE; break;
         case T.GOAL:    goal = i;         grid[i] = T.GOAL; break;
         case T.HOLE:    holes.push(i);    grid[i] = T.HOLE; break;
+        case T.CRACK:   cracks.push(i);   grid[i] = T.CRACK; break;
         default:        grid[i] = t;
       }
     }
-    return { w, h, grid, crystals, blocks, holes, start, goal, tiles: Array.from(tiles) };
+    return { w, h, grid, crystals, blocks, holes, cracks, start, goal, tiles: Array.from(tiles) };
   }
 
   function initState(level) {
-    return { pos: level.start, got: 0, blocks: level.blocks.slice(), filled: 0 };
+    return { pos: level.start, got: 0, blocks: level.blocks.slice(), filled: 0, cracked: 0 };
   }
 
   function cloneState(s) {
-    return { pos: s.pos, got: s.got, blocks: s.blocks.slice(), filled: s.filled };
+    return { pos: s.pos, got: s.got, blocks: s.blocks.slice(), filled: s.filled, cracked: s.cracked | 0 };
+  }
+
+  /** ヒビ氷 cell が割れ済みか */
+  function isBrokenCrack(level, crackedMask, cell) {
+    const ci = level.cracks.indexOf(cell);
+    return ci >= 0 && ((crackedMask >> ci) & 1) === 1;
   }
 
   function isFilled(level, filledMask, cell) {
@@ -103,6 +111,7 @@
   function simulate(level, state, dir) {
     const { w, h, grid, goal, crystals, holes } = level;
     let pos = state.pos, d = dir, got = state.got, filled = state.filled;
+    let cracked = state.cracked | 0;
     const blocks = state.blocks.slice();
     const segments = [], pickups = [];
     let push = null, outcome = 'stop', goalLocked = false;
@@ -138,8 +147,14 @@
 
         let c = grid[np];
         if (c === T.HOLE && isFilled(level, filled, np)) c = T.ICE;
+        if (c === T.CRACK) c = isBrokenCrack(level, cracked, np) ? T.HOLE : T.ICE; // 割れ済み=穴 / 未破壊=氷
         if (c === T.WALL) { running = false; break; }
 
+        // いまいるマスがヒビ氷なら、離れるこの瞬間に割れる
+        if (grid[pos] === T.CRACK) {
+          const ki = level.cracks.indexOf(pos);
+          if (ki >= 0) cracked |= (1 << ki);
+        }
         pos = np; totalSteps++;
         if (c === T.HOLE) { outcome = 'fall'; running = false; break; }
 
@@ -168,7 +183,7 @@
     const moved = segments.length > 0 || !!push || got !== state.got;
     if (!moved) return { moved: false };
 
-    const ns = { pos, got, blocks, filled };
+    const ns = { pos, got, blocks, filled, cracked };
     if (outcome === 'stop' && pos === goal) {
       if (got === fullCrystalMask(level)) outcome = 'win';
       else goalLocked = true;

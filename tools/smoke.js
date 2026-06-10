@@ -115,7 +115,7 @@ function boot(hash, setup) {
     const w = boot('#make');
     const doc = w.document;
     ok(!doc.querySelector('#view-editor').hidden, 'エディタ表示');
-    ok(doc.querySelectorAll('#palette .pal-btn').length === 12, 'パレット12種');
+    ok(doc.querySelectorAll('#palette .pal-btn').length === 13, 'パレット13種');
     ok(doc.querySelectorAll('#editorBoard .cell').length === 49, '7x7セル');
     // 空盤面でチェック → スタート/ゴール必須メッセージ
     doc.querySelector('#btnEdCheck').click();
@@ -361,7 +361,7 @@ function boot(hash, setup) {
     const w = boot('#how');
     const doc = w.document;
     ok(!doc.querySelector('#view-how').hidden, 'あそびかた表示');
-    ok(doc.querySelectorAll('#legend .legend-item').length === 8, '凡例8項目');
+    ok(doc.querySelectorAll('#legend .legend-item').length === 9, '凡例9項目');
     w.close();
   }
 

@@ -113,7 +113,7 @@
         tiles.push(tileBytes[i] >> 4);
         if (tiles.length < w * h) tiles.push(tileBytes[i] & 15);
       }
-      for (const t of tiles) if (t > 11) return { error: 'format' };
+      for (const t of tiles) if (t > 12) return { error: 'format' };
       const sp = E.countSpecials(tiles);
       if (sp.starts !== 1 || sp.goals !== 1) return { error: 'format' };
       return { w, h, tiles, authorMoves, name };

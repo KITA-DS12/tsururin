@@ -13,13 +13,13 @@
 
   // 曜日別レシピ(0=日 … 6=土)。日曜が最難関。
   const CFG = [
-    /*日*/ { w: 9, h: 9, walls: [11, 15], holes: [2, 4], sand: [1, 3], arrows: [1, 3], crystals: [1, 3], blocks: [1, 2], par: [8, 14] },
+    /*日*/ { w: 9, h: 9, walls: [11, 15], holes: [2, 4], sand: [1, 3], arrows: [1, 3], crystals: [1, 3], blocks: [1, 2], cracks: [1, 2], par: [8, 14] },
     /*月*/ { w: 6, h: 6, walls: [4, 5],   holes: [0, 1], sand: [0, 1], arrows: [0, 0], crystals: [0, 0], blocks: [0, 0], par: [4, 7] },
     /*火*/ { w: 6, h: 6, walls: [5, 7],   holes: [1, 2], sand: [0, 1], arrows: [0, 0], crystals: [0, 0], blocks: [0, 0], par: [5, 8] },
     /*水*/ { w: 7, h: 7, walls: [5, 7],   holes: [1, 2], sand: [1, 2], arrows: [0, 1], crystals: [0, 0], blocks: [0, 0], par: [5, 8] },
     /*木*/ { w: 7, h: 7, walls: [7, 9],   holes: [1, 2], sand: [1, 2], arrows: [1, 2], crystals: [0, 1], blocks: [0, 0], par: [6, 10] },
     /*金*/ { w: 8, h: 8, walls: [7, 9],   holes: [1, 2], sand: [0, 2], arrows: [1, 2], crystals: [1, 2], blocks: [0, 1], par: [6, 10] },
-    /*土*/ { w: 8, h: 8, walls: [9, 12],  holes: [2, 3], sand: [1, 2], arrows: [1, 2], crystals: [1, 2], blocks: [1, 2], par: [7, 12] },
+    /*土*/ { w: 8, h: 8, walls: [9, 12],  holes: [2, 3], sand: [1, 2], arrows: [1, 2], crystals: [1, 2], blocks: [1, 2], cracks: [0, 1], par: [7, 12] },
   ];
 
   function strHash(s) {
@@ -79,6 +79,8 @@
     put(int(rnd, cfg.arrows[0], cfg.arrows[1]), () => T.AU + int(rnd, 0, 3));
     put(int(rnd, cfg.crystals[0], cfg.crystals[1]), () => T.CRYSTAL);
     put(int(rnd, cfg.blocks[0], cfg.blocks[1]), () => T.BLOCK);
+    // cracks 未定義の cfg では rnd() を消費しない(既存盤面のシード列を変えないため)
+    if (cfg.cracks) put(int(rnd, cfg.cracks[0], cfg.cracks[1]), () => T.CRACK);
 
     if (pool.length < 2) return null;
     // スタートとゴールはある程度離す
@@ -129,6 +131,30 @@
     return false;
   }
 
+  /** ヒビ氷が機能しているか:
+   *  (1) 最短解のどこかでヒビ氷を割っている(=実際に踏んで離れている)
+   *  (2) ヒビ氷を普通の氷に置換した盤面の最短手のほうが短い(=割れ制約がルートを縛っている)
+   */
+  function crackEngaged(level, dirs, origPar) {
+    if (!level.cracks.length) return false;
+    let st = E.initState(level);
+    for (const d of dirs) {
+      const r = E.simulate(level, st, d);
+      if (!r.moved) return false;
+      st = r.state;
+      if (r.outcome === 'win') break;
+    }
+    if (!st.cracked) return false; // 一度も割っていない=踏んでいない
+    const iceTiles = level.tiles.slice();
+    for (let i = 0; i < iceTiles.length; i++) {
+      if (iceTiles[i] === T.CRACK) iceTiles[i] = T.ICE;
+    }
+    const ice = E.parseLevel(level.w, level.h, iceTiles);
+    const res = S.solvePath(ice, 60000);
+    if (!res || res.par == null) return true; // 置換すると解けない(理論上ないが安全側)
+    return res.par < origPar;
+  }
+
   /** 最短手順のいずれかで氷塊を押す手があるか */
   function blockEngaged(level, dirs) {
     let st = E.initState(level);
@@ -166,6 +192,7 @@
   function hasBlockTile(tiles) { return hasTile(tiles, T.BLOCK); }
   function hasHoleTile(tiles)  { return hasTile(tiles, T.HOLE); }
   function hasSandTile(tiles)  { return hasTile(tiles, T.SAND); }
+  function hasCrackTile(tiles) { return hasTile(tiles, T.CRACK); }
 
   // 最終フォールバック(生成が万一失敗した日のための盤面・ソルバー検証済み PAR=6)
   const FALLBACK = {
@@ -228,6 +255,7 @@
     25: { tile: T.AR,      name: '矢印床',     desc: '通ると強制的にその方向へ滑り直す' },
     33: { tile: T.CRYSTAL, name: 'クリスタル', desc: '通過で回収。ぜんぶ集めないとゴールが開かない' },
     41: { tile: T.BLOCK,   name: '氷塊',       desc: '押すと滑っていく。穴に落とせば埋まって道になる' },
+    46: { tile: T.CRACK,   name: 'ヒビ氷',     desc: '一度通ると割れて穴になる。同じ道は二度通れない' },
   };
 
   function stageCfg(n) {
@@ -242,6 +270,7 @@
       const size = n >= 49 ? 9 : n >= 46 ? 8 : 7;
       const lo = n >= 49 ? 7 : n >= 45 ? 6 : 5;
       c = { w: size, walls: [size + 1, size + 4], holes: [1, 3], sand: [0, 2], arrows: [0, 2], crystals: [0, 2], blocks: [1, n >= 46 ? 2 : 1], par: [lo, 12] };
+      if (n >= 46) c.cracks = [1, 2]; // 最終ブロックはヒビ氷入り
     }
     c.h = c.w;
     if (n % CHECKPOINT === 0) {
@@ -254,6 +283,7 @@
     if (n === 9)  { c.w = 6; c.h = 6; c.holes = [2, 3]; }
     if (n === 17) { c.sand   = [2, 3]; }
     if (n === 41) { c.blocks = [2, 2]; }
+    if (n === 46) { c.cracks = [2, 3]; }
     return c;
   }
 
@@ -265,6 +295,7 @@
     if (info.tile === T.HOLE)  return hasHoleTile(tiles)  && holeEngaged(level, dirs, par);
     if (info.tile === T.SAND)  return hasSandTile(tiles)  && sandEngaged(level, dirs);
     if (info.tile === T.BLOCK) return hasBlockTile(tiles) && blockEngaged(level, dirs);
+    if (info.tile === T.CRACK) return hasCrackTile(tiles) && crackEngaged(level, dirs, par);
     // ARROW (T.AR=4..7) は arrowEngaged で既に強制済み。CRYSTAL は仕様上必ず engaged。WALL は基本要素。
     return true;
   }
@@ -325,6 +356,7 @@
       cfg.arrows = [0, 2];
       cfg.crystals = [0, 2];
       cfg.blocks = area >= 42 ? [1, 1] : [0, 0];
+      cfg.cracks = [0, 2];
     }
     return cfg;
   }
@@ -353,5 +385,5 @@
   g.TSR.Daily = { todayJST, infoOf, generate, PRACTICE, EPOCH_UTC, CFG, mulberry32, strHash,
                   STAGE_MAX, CHECKPOINT, NEW_TILES, stageCfg, generateStage,
                   RANDOM_DIFFS, generateRandom, arrowEngaged, hasArrowTile,
-                  sandEngaged, blockEngaged, holeEngaged };
+                  sandEngaged, blockEngaged, holeEngaged, crackEngaged, hasCrackTile };
 })(typeof window !== 'undefined' ? window : globalThis);

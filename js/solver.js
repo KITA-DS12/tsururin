@@ -7,7 +7,7 @@
 
   function keyOf(s) {
     const bs = s.blocks.slice().sort((a, b) => a - b).join(',');
-    return s.pos + '|' + s.got + '|' + s.filled + '|' + bs;
+    return s.pos + '|' + s.got + '|' + s.filled + '|' + (s.cracked | 0) + '|' + bs;
   }
 
   /**

@@ -61,6 +61,14 @@
   <circle cx="26" cy="70" r="2" fill="#C9A968"/><circle cx="62" cy="76" r="2" fill="#C9A968"/>
 </svg>`;
 
+  SVG.crack = () => `
+<svg viewBox="0 0 100 100" aria-hidden="true">
+  <rect x="10" y="12" width="80" height="76" rx="16" fill="#D6EDFB"/>
+  <rect x="10" y="12" width="80" height="22" rx="11" fill="#EAF6FD"/>
+  <path d="M28 24 L44 40 L36 56 L50 74 M44 40 L60 34 L72 38 M36 56 L24 64" stroke="#7FB4D6" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M60 34 L66 22 M50 74 L56 84" stroke="#9FC9E4" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+</svg>`;
+
   SVG.arrow = (dir) => {
     const rot = { 0: 180, 1: 270, 2: 0, 3: 90 }[dir]; // chevron は下向き基準
     return `
@@ -140,6 +148,7 @@
       case T.WALL: return SVG.rock();
       case T.HOLE: return SVG.hole();
       case T.SAND: return SVG.sand();
+      case T.CRACK: return SVG.crack();
       case T.AU: case T.AR: case T.AD: case T.AL: return SVG.arrow(E.ARROW_DIR[t]);
       case T.CRYSTAL: return SVG.crystal();
       case T.BLOCK: return SVG.block();
@@ -180,6 +189,7 @@
         case 'push': this.tone(120, 0.09, 'square', 0.13); break;
         case 'pick': this.tone(880, 0.09, 'sine', 0.12, 1320); setTimeout(() => this.tone(1320, 0.10, 'sine', 0.10, 1760), 70); break;
         case 'fall': this.tone(320, 0.35, 'sawtooth', 0.10, 70); break;
+        case 'crack': this.tone(1100, 0.06, 'square', 0.08, 700); setTimeout(() => this.tone(520, 0.09, 'square', 0.07, 260), 55); break;
         case 'loop': this.tone(440, 0.12, 'triangle', 0.10, 520); setTimeout(() => this.tone(520, 0.12, 'triangle', 0.10, 440), 130); setTimeout(() => this.tone(440, 0.16, 'triangle', 0.09, 300), 260); break;
         case 'win': [660, 880, 1100, 1320].forEach((f, i) => setTimeout(() => this.tone(f, 0.16, 'triangle', 0.13), i * 95)); break;
         case 'stamp': this.tone(90, 0.12, 'square', 0.18); this.tone(50, 0.18, 'sine', 0.16); break;
@@ -235,6 +245,7 @@
         if (t === T.WALL) { cell.classList.add('t-wall'); cell.innerHTML = SVG.rock(); }
         else if (t === T.HOLE) { cell.classList.add('t-hole'); cell.innerHTML = SVG.hole(); }
         else if (t === T.SAND) { cell.classList.add('t-sand'); cell.innerHTML = SVG.sand(); }
+        else if (t === T.CRACK) { cell.classList.add('t-crack'); cell.innerHTML = SVG.crack(); }
         else if (t >= T.AU && t <= T.AL) { cell.classList.add('t-arrow'); cell.innerHTML = SVG.arrow(E.ARROW_DIR[t]); }
         else if (t === T.GOAL) { cell.classList.add('t-goal'); cell.innerHTML = SVG.goal(); }
         if (i === level.start && !opts.editor) {
@@ -314,6 +325,17 @@
           cell.innerHTML = SVG.hole();
         }
       });
+      lv.cracks.forEach((cc, i) => {
+        const brokenNow = ((state.cracked >> i) & 1) === 1;
+        const cell = this.cellEls[cc];
+        if (brokenNow && !cell.classList.contains('broken')) {
+          cell.classList.add('broken');
+          cell.innerHTML = SVG.hole();
+        } else if (!brokenNow && cell.classList.contains('broken')) {
+          cell.classList.remove('broken', 'just-broke');
+          cell.innerHTML = SVG.crack();
+        }
+      });
       if (this.penguinEl) {
         this.penguinEl.className = 'sprite penguin';
         this.penguinEl.style.opacity = '';
@@ -374,6 +396,32 @@
           const el = this.crystalEls.get(s.cell);
           if (el) { el.classList.add('picked'); Sound.play('pick'); setTimeout(() => el.classList.add('hidden'), 240); }
         }, s.at);
+      }
+
+      // ヒビ氷の破壊予約(ペンギンが離れた瞬間に割る)
+      if (lv.cracks.length) {
+        let tAcc = 0;
+        const brokeNow = new Set();
+        for (const seg of result.segments) {
+          const dur = this.durFor(seg.len);
+          lv.cracks.forEach((cc, ci) => {
+            if (((result.state.cracked >> ci) & 1) !== 1) return; // この手の終了時点でも未破壊
+            if (brokeNow.has(cc)) return;
+            const cell = this.cellEls[cc];
+            if (cell.classList.contains('broken')) return;        // 前の手で割れ済み
+            if (!this.cellInSegment(cc, seg)) return;
+            brokeNow.add(cc);
+            const stepInSeg = this.stepsBetween(seg.from, cc);
+            const at = tAcc + (seg.len ? (stepInSeg / seg.len) * dur : 0) + 90; // 離れた直後
+            setTimeout(() => {
+              cell.classList.add('broken', 'just-broke');
+              cell.innerHTML = SVG.hole();
+              Sound.play('crack');
+              setTimeout(() => cell.classList.remove('just-broke'), 340);
+            }, at);
+          });
+          tAcc += dur;
+        }
       }
 
       // ペンギン滑走
