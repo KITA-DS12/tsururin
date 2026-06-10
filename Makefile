@@ -50,17 +50,38 @@ check-env:
 	fi
 
 # S3 同期: デプロイ対象だけアップロード、バケット上の不要ファイルは削除
+# 静的アセット(CSS/JS/画像/favicon等)は 1 日キャッシュ。デプロイ時に invalidate するので古いまま残らない。
+#
+# 注意: aws s3 sync は内容が変わらないファイルをスキップする → メタデータ(cache-control)も更新されない。
+# そのため sync で「削除と新規分」を扱ったあと、cp --recursive で全件メタデータを上書きする2段構え。
 sync: check-env
 	@echo "→ S3 同期開始: s3://$(S3_BUCKET)"
+	@# 1. 不要ファイル削除と新規追加分の同期
 	aws s3 sync . s3://$(S3_BUCKET) \
 		--delete \
 		--exclude "*" \
 		$(foreach inc,$(DEPLOY_INCLUDES),--include "$(inc)" --include "$(inc)/*") \
-		--cache-control "public, max-age=300"
-	@# index.html だけは短めキャッシュで上書き（即反映のため）
+		--cache-control "public, max-age=86400"
+	@# 2. css と js はディレクトリごと cp で再アップロード(cache-control 強制更新)
+	aws s3 cp css/ s3://$(S3_BUCKET)/css/ --recursive \
+		--cache-control "public, max-age=86400"
+	aws s3 cp js/ s3://$(S3_BUCKET)/js/ --recursive \
+		--cache-control "public, max-age=86400"
+	@# 3. ルート直下の画像/favicon もメタデータ更新
+	@for f in ogp.png promo.png favicon.svg favicon-192.png apple-touch-icon.png; do \
+		aws s3 cp $$f s3://$(S3_BUCKET)/$$f --cache-control "public, max-age=86400"; \
+	done
+	@# 4. index.html だけは短めキャッシュで上書き（即反映のため）
 	aws s3 cp index.html s3://$(S3_BUCKET)/index.html \
 		--cache-control "public, max-age=60, must-revalidate" \
 		--content-type "text/html; charset=utf-8"
+	@# 5. robots.txt と sitemap.xml は中程度(1時間)
+	aws s3 cp robots.txt s3://$(S3_BUCKET)/robots.txt \
+		--cache-control "public, max-age=3600" \
+		--content-type "text/plain; charset=utf-8"
+	aws s3 cp sitemap.xml s3://$(S3_BUCKET)/sitemap.xml \
+		--cache-control "public, max-age=3600" \
+		--content-type "application/xml; charset=utf-8"
 	@echo "→ S3 同期完了"
 
 # CloudFront キャッシュ無効化

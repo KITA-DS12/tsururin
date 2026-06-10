@@ -41,7 +41,9 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=DotGothic16&display=swap" rel="stylesheet">
+<!-- フォントは非同期で読み込む(レンダリングをブロックしない)。届くまでは display=swap でシステムフォント表示 -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=DotGothic16&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&family=DotGothic16&display=swap"></noscript>
 <link rel="stylesheet" href="css/style.css">
 <!-- Google Analytics (GA4) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-EXMBWN42H2"></script>
@@ -240,12 +242,12 @@
 
 <div id="toast" role="status"></div>
 
-<script src="js/engine.js"></script>
-<script src="js/solver.js"></script>
-<script src="js/codec.js"></script>
-<script src="js/daily.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/analytics.js"></script>
-<script src="js/main.js"></script>
+<script src="js/engine.js" defer></script>
+<script src="js/solver.js" defer></script>
+<script src="js/codec.js" defer></script>
+<script src="js/daily.js" defer></script>
+<script src="js/ui.js" defer></script>
+<script src="js/analytics.js" defer></script>
+<script src="js/main.js" defer></script>
 </body>
 </html>
