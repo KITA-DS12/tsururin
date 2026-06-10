@@ -40,20 +40,27 @@ make deploy   # S3 同期 + CloudFront キャッシュ無効化
 ## ファイル構成
 
 ```
-index.html        画面構造・OGP・フォント読み込み
-css/style.css     デザイン一式(冬のアーケード調)
-js/engine.js      滑走シミュレーション(純粋ロジック・UI非依存)
-js/solver.js      BFSソルバー(最短手数=PARの算出・可解判定)
-js/codec.js       挑戦状URLコーデック(4bitタイル圧縮+CRC16+base64url)
-js/daily.js       デイリー問題の決定論的生成(曜日別難易度カーブ)
-js/ui.js          盤面レンダラー・SVGスプライト・アニメーション・効果音
-js/main.js        ルーティング・ゲーム進行・記録・エディタ・共有
-ogp.png           OGP画像(1200×630)
-promo.png         告知ツイート添付用のプロモ画像(1600×900)
-tools/test.js     ロジック層ユニットテスト(node tools/test.js)
-tools/smoke.js    jsdomによる統合テスト(要: npm i jsdom)
-tools/ogp.js      OGP画像の再生成スクリプト(要: npm i sharp + M PLUS Rounded 1cフォント)
-tools/promo.js    プロモ画像の再生成スクリプト(同上)
+index.html              画面構造・OGP・JSON-LD・フォント読み込み
+css/style.css           デザイン一式(冬のアーケード調)
+js/engine.js            滑走シミュレーション(純粋ロジック・UI非依存)
+js/solver.js            BFSソルバー(最短手数=PARの算出・可解判定)
+js/codec.js             挑戦状URLコーデック(4bitタイル圧縮+CRC16+base64url)
+js/daily.js             デイリー問題の決定論的生成(曜日別難易度カーブ)
+js/ui.js                盤面レンダラー・SVGスプライト・アニメーション・効果音
+js/analytics.js         GA4 ラッパー(ローカルは console.log のみ)
+js/main.js              ルーティング・ゲーム進行・記録・エディタ・共有
+ogp.png                 OGP画像(1200×630)
+promo.png               告知ツイート添付用のプロモ画像(1600×900)
+favicon.svg             SVG favicon(ブラウザタブ・検索結果)
+favicon-192.png         192×192 PNG favicon(Android/PWA)
+apple-touch-icon.png    180×180 PNG(iOS ホーム画面)
+robots.txt              全クローラ許可 + sitemap 誘導
+sitemap.xml             サイトマップ(トップ1URL)
+tools/test.js           ロジック層ユニットテスト(node tools/test.js)
+tools/smoke.js          jsdomによる統合テスト(要: npm i jsdom)
+tools/ogp.js            OGP画像の再生成スクリプト(要: npm i sharp)
+tools/promo.js          プロモ画像の再生成スクリプト(同上)
+tools/favicon.js        favicon PNG の再生成スクリプト(要: npm i sharp)
 ```
 
 ## 仕組みのメモ
@@ -71,11 +78,12 @@ tools/promo.js    プロモ画像の再生成スクリプト(同上)
 - **ランダム生成の難易度**: 同ファイルの `randomCfg()` / `RANDOM_DIFFS`
 - **曜日別の難易度**: 同ファイルの `CFG`(盤面サイズ・ギミック数・PAR範囲)
 - **配色・フォント**: `css/style.css` 冒頭の `:root` トークン
-- **OGP画像**: `ogp.png`(1200×630)を同梱済み。**デプロイ後に `index.html` 内の `og:image` / `twitter:image` の `https://your-domain.example/ogp.png` を実際の公開URLへ書き換えてください**(SNSのカード取得は絶対URLのみ対応のため)。画像を作り直す場合は `npm i sharp` の上で `node tools/ogp.js`
+- **OGP画像**: `ogp.png`(1200×630)を同梱。画像を作り直す場合は `npm i sharp` の上で `make ogp` (または `node tools/ogp.js`)
+- **favicon**: `favicon.svg` を編集して `make favicon` で PNG (180/192) を再生成
 
 ## テスト
 
 ```bash
-node tools/test.js          # エンジン/ソルバー/コーデック/デイリー生成(42件)
-npm install && npm run smoke  # jsdomでの画面統合テスト(38件)
+make test                     # エンジン/ソルバー/コーデック/デイリー生成のユニットテスト
+npm install && make smoke     # jsdomでの画面統合テスト
 ```

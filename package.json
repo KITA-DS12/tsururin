@@ -7,7 +7,8 @@
     "test": "node tools/test.js",
     "smoke": "node tools/smoke.js",
     "ogp": "node tools/ogp.js",
-    "promo": "node tools/promo.js"
+    "promo": "node tools/promo.js",
+    "favicon": "node tools/favicon.js"
   },
   "devDependencies": {
     "jsdom": "^25.0.0",

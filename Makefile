@@ -7,7 +7,7 @@ export
 endif
 
 # デプロイ対象に含めるファイル/ディレクトリ
-DEPLOY_INCLUDES := index.html ogp.png promo.png css js
+DEPLOY_INCLUDES := index.html ogp.png promo.png favicon.svg favicon-192.png apple-touch-icon.png robots.txt sitemap.xml css js
 
 help:
 	@echo "tsururin - Available commands:"
@@ -16,6 +16,7 @@ help:
 	@echo "  make smoke       - スモークテスト"
 	@echo "  make ogp         - OGP 画像生成"
 	@echo "  make promo       - プロモ画像生成"
+	@echo "  make favicon     - favicon.svg から PNG を再生成"
 	@echo "  make deploy      - S3 同期 + CloudFront キャッシュ無効化"
 	@echo "  make sync        - S3 同期のみ"
 	@echo "  make invalidate  - CloudFront キャッシュ無効化のみ"
@@ -35,6 +36,9 @@ ogp:
 
 promo:
 	npm run promo
+
+favicon:
+	npm run favicon
 
 # .env に必要な環境変数が入っているかチェック
 check-env:
