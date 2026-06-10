@@ -247,6 +247,18 @@ console.log('--- stages: 全50ステージ生成+関門+ランダム生成 ---')
     const family = info.tile >= 4 && info.tile <= 7 ? [4,5,6,7] : [info.tile];
     ok(family.some((t) => tset.has(t)), 'stage ' + n + ' に NEW タイル(' + info.name + ')が登場');
   }
+  // 新タイル導入ステージは、最短解で実際にそのタイルが機能している(飾りで終わらない)
+  const ENGAGED_CHECKS = [
+    { n: 9,  name: '穴',   fn: (lv, dirs, par) => D.holeEngaged(lv, dirs, par) },
+    { n: 17, name: '砂',   fn: (lv, dirs) => D.sandEngaged(lv, dirs) },
+    { n: 41, name: '氷塊', fn: (lv, dirs) => D.blockEngaged(lv, dirs) },
+  ];
+  for (const c of ENGAGED_CHECKS) {
+    const g2 = D.generateStage(c.n);
+    const lv2 = E.parseLevel(g2.w, g2.h, g2.tiles);
+    const sp2 = S.solvePath(lv2, 60000);
+    ok(sp2 && c.fn(lv2, sp2.dirs, sp2.par), 'stage ' + c.n + ' の NEW タイル(' + c.name + ')が最短解で機能');
+  }
 }
 
 console.log('--- daily: 生成・決定論・速度 ---');

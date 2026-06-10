@@ -115,6 +115,58 @@
     return tiles.some((t) => t >= T.AU && t <= T.AL);
   }
 
+  /** 最短手順のいずれかの停止点が砂タイルか(砂を「足場」として実際に使っているか) */
+  function sandEngaged(level, dirs) {
+    let st = E.initState(level);
+    for (const d of dirs) {
+      const r = E.simulate(level, st, d);
+      if (!r.moved) return false;
+      const last = r.segments[r.segments.length - 1];
+      if (last && level.grid[last.to] === T.SAND) return true;
+      if (r.outcome === 'win') return false;
+      st = r.state;
+    }
+    return false;
+  }
+
+  /** 最短手順のいずれかで氷塊を押す手があるか */
+  function blockEngaged(level, dirs) {
+    let st = E.initState(level);
+    for (const d of dirs) {
+      const r = E.simulate(level, st, d);
+      if (!r.moved) return false;
+      if (r.push) return true;
+      if (r.outcome === 'win') return false;
+      st = r.state;
+    }
+    return false;
+  }
+
+  /** 穴が機能しているか: 穴を ICE に置換した盤面の最短解と比較し、PARが短くならない or 解けないなら穴は無意味
+   *  - 穴ありPAR < 穴なしPAR は構造上ありえない (穴は手数を増やす方向にしか働かない)
+   *  - 穴ありPAR > 穴なしPAR なら穴で回り道させられている → engaged
+   *  - 穴を埋めると解けない場合も engaged (穴が経路を限定している)
+   */
+  function holeEngaged(level, dirs, origPar) {
+    const fakeTiles = level.tiles.slice();
+    let hadHole = false;
+    for (let i = 0; i < fakeTiles.length; i++) {
+      if (fakeTiles[i] === T.HOLE) { fakeTiles[i] = T.ICE; hadHole = true; }
+    }
+    if (!hadHole) return false;
+    const fake = E.parseLevel(level.w, level.h, fakeTiles);
+    const res = S.solvePath(fake, 60000);
+    if (!res || res.par == null) return true;
+    return res.par < origPar;
+  }
+
+  function hasTile(tiles, target) {
+    return tiles.some((t) => t === target);
+  }
+  function hasBlockTile(tiles) { return hasTile(tiles, T.BLOCK); }
+  function hasHoleTile(tiles)  { return hasTile(tiles, T.HOLE); }
+  function hasSandTile(tiles)  { return hasTile(tiles, T.SAND); }
+
   // 最終フォールバック(生成が万一失敗した日のための盤面・ソルバー検証済み PAR=6)
   const FALLBACK = {
     w: 7, h: 7,
@@ -197,7 +249,24 @@
       c.par = [Math.min(c.par[0] + 1, c.par[1]), Math.min(c.par[1] + 1, 12)];
       c.walls = [c.walls[0], c.walls[1] + 1];
     }
+    // NEW_TILE 登場ステージは導入タイルを多めに置いて engaged 条件を満たしやすくする
+    // (穴は 5x5 だと engaged 配置が見つかりにくいので 6x6 に拡張)
+    if (n === 9)  { c.w = 6; c.h = 6; c.holes = [2, 3]; }
+    if (n === 17) { c.sand   = [2, 3]; }
+    if (n === 41) { c.blocks = [2, 2]; }
     return c;
+  }
+
+  /** 新タイル初登場ステージで、そのタイルが最短解で機能していることを要求する判定。
+   *  該当ステージ以外は緩い従来動作。 */
+  function newTileEngagedOk(n, level, dirs, tiles, par) {
+    const info = NEW_TILES[n];
+    if (!info) return true;
+    if (info.tile === T.HOLE)  return hasHoleTile(tiles)  && holeEngaged(level, dirs, par);
+    if (info.tile === T.SAND)  return hasSandTile(tiles)  && sandEngaged(level, dirs);
+    if (info.tile === T.BLOCK) return hasBlockTile(tiles) && blockEngaged(level, dirs);
+    // ARROW (T.AR=4..7) は arrowEngaged で既に強制済み。CRYSTAL は仕様上必ず engaged。WALL は基本要素。
+    return true;
   }
 
   /** ステージ番号から決定論的に生成。{w,h,tiles,par,n} */
@@ -217,6 +286,9 @@
       if (res.par < lo || res.par > cfg.par[1]) continue;
       // 矢印を含む盤面は、最短解が矢印を実際に使うものだけ採用
       if (hasArrowTile(b.tiles) && !arrowEngaged(level, res.dirs)) continue;
+      // 新タイル初登場ステージは、そのタイルが「飾り」で終わらないものだけ採用
+      // (relaxed フェーズでも厳格にしないと学習導線が崩れるため緩めない)
+      if (!newTileEngagedOk(n, level, res.dirs, b.tiles, res.par)) continue;
       return { w: b.w, h: b.h, tiles: b.tiles, par: res.par, n, attempt };
     }
     const level = E.parseLevel(FALLBACK.w, FALLBACK.h, FALLBACK.tiles);
@@ -280,5 +352,6 @@
 
   g.TSR.Daily = { todayJST, infoOf, generate, PRACTICE, EPOCH_UTC, CFG, mulberry32, strHash,
                   STAGE_MAX, CHECKPOINT, NEW_TILES, stageCfg, generateStage,
-                  RANDOM_DIFFS, generateRandom, arrowEngaged, hasArrowTile };
+                  RANDOM_DIFFS, generateRandom, arrowEngaged, hasArrowTile,
+                  sandEngaged, blockEngaged, holeEngaged };
 })(typeof window !== 'undefined' ? window : globalThis);
